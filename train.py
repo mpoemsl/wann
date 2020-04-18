@@ -52,7 +52,7 @@ def main(n_gen=5, dataset_name="mnist", **hyper):
     dataset_name -  (string) name of the dataset for which the WANN is constructed 
     """
 
-    hyper["experiment_name"] = get_experiment_name(**hyper)
+    hyper["experiment_name"] = get_experiment_name(n_gen=n_gen, **hyper)
 
     print("Creating folders for experiment '{}' ...".format(hyper["experiment_name"]))
     os.mkdir("best_individuums/" + hyper["experiment_name"])

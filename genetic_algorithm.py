@@ -36,7 +36,7 @@ def evolve_population(population, eval_scores, cull_ratio=0.1, elite_ratio=0.1, 
     ranked_population = population[np.argsort(eval_scores)] # ascending order, worst first, best last 
 
     # save best individuum of this generation if generation number is given
-    if gen > 0:
+    if gen > -1:
         ranked_population[-1].save_to("best_individuums/{}/best_gen_{}".format(hyper["experiment_name"], gen))
 
     # let the fittest x % pass unchanged
