@@ -3,10 +3,13 @@ import tensorflow as tf
 import numpy as np
 import cv2
 
-def get_experiment_name(dataset_name="mnist", n_gen=128, pop_size=64, weight_type="random", **kwargs):
+def get_experiment_name(dataset_name="mnist", n_gen=128, pop_size=64, weight_type="random", prob_crossover=0.0, **kwargs):
     """ Returns name for experiment given a unique subset of hyperparameters. """
 
-    return "experiment_{}_{}_{}_{}".format(dataset_name, n_gen, pop_size, weight_type)    
+
+    print("utilities", dataset_name)
+    pc_str = "-".join(str(prob_crossover).split("."))
+    return "experiment_{}_{}_{}_{}_{}".format(dataset_name, n_gen, pop_size, weight_type, pc_str)    
     
 
 def load_dataset(dataset_name, split="train"):
@@ -77,14 +80,4 @@ def downsize_and_deskew(img, tgt_shape=(16, 16)):
         M = np.float32([[1, skew, -0.5 * tgt_shape[0] * skew], [0, 1, 0]])
         return cv2.warpAffine(downsized_img, M, tgt_shape, flags=(cv2.WARP_INVERSE_MAP|cv2.INTER_LINEAR))  
 
-
-X, y = load_dataset("forestfires", split="train")
-
-print("train:")
-print(y)
-
-X, y = load_dataset("forestfires", split="test")
-
-print("test")
-print(y)
 

@@ -17,7 +17,7 @@ def main():
     test_exp_name = args.test_experiment_folder.split("/")[-2]
 
     assert train_exp_name == test_exp_name, "Train and test folder do not belong to the same experiment."
-    dataset, n_gen, pop_size, weight_type = train_exp_name.split("_")[1:]
+    dataset, n_gen, pop_size, weight_type = train_exp_name.split("_")[1:-1]
     n_gen, pop_size = int(n_gen), int(pop_size)
 
     mean_losses, mean_n_cons, mean_n_layers = get_mean_stats(args.train_experiment_folder)

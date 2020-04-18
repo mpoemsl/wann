@@ -11,6 +11,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import argparse
 import time
 import os
 
@@ -22,14 +23,14 @@ LOSS_FUNCTIONS = {
 }
 
 # initialization of hyper parameters
-hyper = {
+PARAMS = {
     "dataset_name": "forestfires",        # name of dataset
-    "loss_name": "mse",             # cross-entropy loss
+    "loss_name": "cce",             # cross-entropy loss
     "n_gen": 128,                    # number of generations: paper does 4096
     "pop_size": 64,                 # size of population: paper does 960
-    "sample_size": 100,            # size of random sample that individuums are evaluated on
+    "sample_size": 1000,            # size of random sample that individuums are evaluated on
     "weight_type": "shared",        # weights can either be shared or random
-    "ratio_enabled": 0.8,          # probability of connection being enabled when individuum is initialized
+    "ratio_enabled": 0.05,          # probability of connection being enabled when individuum is initialized
     "tau": 0.5,                     # parameter that balances off the ranking between number of connection and mean loss
     "phi": 0.5,                     # parameter that balances off the ranking between min loss and mean loss
     "cull_ratio": 0.2,              # percentage of unfittest individuals who get excluded from breeding
@@ -42,6 +43,28 @@ hyper = {
     "prob_rank_n_cons": 0.8         # probability that ranking is performed via number of connections and mean loss (instead of via mean loss and min loss)
 }
 
+parser = argparse.ArgumentParser(description="Performs training of a WANN experiment.")
+
+parser.add_argument("dataset_name", type=str)
+parser.add_argument("loss_name", type=str)
+parser.add_argument("n_gen", type=int)
+parser.add_argument("pop_size", type=int)
+parser.add_argument("sample_size", type=int)
+parser.add_argument("ratio_enabled", type=float)
+parser.add_argument("weight_type", type=str)
+parser.add_argument("prob_crossover", type=float)
+
+args = parser.parse_args()
+
+PARAMS["dataset_name"] = args.dataset_name
+PARAMS["loss_name"] = args.loss_name
+PARAMS["n_gen"] = args.n_gen
+PARAMS["pop_size"] = args.pop_size
+PARAMS["sample_size"] = args.sample_size
+PARAMS["weight_type"] = args.weight_type
+PARAMS["ratio_enabled"] = args.ratio_enabled
+PARAMS["prob_crossover"] = args.prob_crossover
+
 
 def main(n_gen=5, dataset_name="mnist", **hyper):
     """ Main loop for the WANNs construction.
@@ -51,7 +74,7 @@ def main(n_gen=5, dataset_name="mnist", **hyper):
     n_gen        -  (int) number of generations or how often the evolution should take place
     dataset_name -  (string) name of the dataset for which the WANN is constructed 
     """
-
+    
     hyper["experiment_name"] = get_experiment_name(n_gen=n_gen, dataset_name=dataset_name, **hyper)
 
     print("Creating folders for experiment '{}' ...".format(hyper["experiment_name"]))
@@ -228,5 +251,5 @@ def sample_data(X, y, sample_size=1000, **kwargs):
         
 if __name__ == "__main__":
 
-    main(**hyper)
+    main(**PARAMS)
 

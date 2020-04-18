@@ -32,7 +32,8 @@ def main():
     args = parser.parse_args()
     exp_name = args.train_experiment_folder.split("/")[-2]
 
-    dataset_name, n_gen, pop_size, weight_type = exp_name.split("_")[1:]
+    print(exp_name)
+    dataset_name, n_gen, pop_size, weight_type = exp_name.split("_")[1:-1]
     n_gen, pop_size = int(n_gen), int(pop_size)
 
     # save mean evaluation scores
@@ -87,10 +88,9 @@ def main():
 
                 elif dataset_name == "forestfires":
                     # delog
-                    y_pred = outputs * 300
+                    y_pred = outputs[:, 0] * 300
 
-                print(y_true, y_pred)
-                eval_score = eval_func(y_true, y_pred[:, 0])
+                eval_score = eval_func(y_true, y_pred)
                 
                 eval_scores.append(eval_score)
             
