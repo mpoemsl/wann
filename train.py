@@ -16,24 +16,25 @@ import os
 
 # initialization of hyper parameters
 hyper = {
-    "n_gen": 3,         # number of generations: they do 4096
-    "pop_size": 64,       # size of population: they do 960
+    "n_gen": 3,            # number of generations: paper does 4096
+    "pop_size": 64,        # size of population: paper does 960
     "init_activation": 1,  # ReLU, MNIST specific
     "ratio_enabled": 0.05, # probability of connection being enabled when individuum is initialized
     "cull_ratio": 0.2,     # percentage of unfittest individuals who get excluded from breeding
     "elite_ratio": 0.2,    # percentage of fittest individuals who pass on to the new population unchanged
-    "autogamy": 1.0,       # percentage of how often no crossover takes place, but the best genome is passed on after mutating
+    "prob_crossover": 0.0, # percentage of how often no crossover takes place, but the best genome is passed on after mutating
     "n_cross_points": 4,   # number of crossing points in crossover
-    "prob_add_node": 0.25,  # probability of adding a node as mutation
-    "prob_add_con": 0.25,   # probability of adding a connection as mutation
+    "prob_add_node": 0.25, # probability of adding a node as mutation
+    "prob_add_con": 0.25,  # probability of adding a connection as mutation
     "prob_change_activation": 0.5, # probability of changing the activation function as mutation
-    "weight_values": [-2.0, -1.0, -0.5, 0.5, 1.0, 2.0],
-    "weight_type": "random", # shared or random
-    "n_rollouts": 1,  
-    "rank_prob": 0.8,
-    "tournament_size": 32,
-    "tau": 0.5,
-    "phi": 0.5,    
+    "weight_values": [-2.0, -1.0, -0.5, 0.5, 1.0, 2.0], # single shared weight values of the network
+    "weight_type": "random",# weights can either be shared or random
+    "n_rollouts": 1,        # number of repetitions when evaluation performance of a network and its weight values
+    "rank_prob": 0.8,       # probability that ranking is performed via number of connections and mean loss
+                            # (instead of via mean loss and min loss)
+    "tournament_size": 32,  # number of individuals competing to become parent of new kid
+    "tau": 0.5,             # parameter that balances off the ranking between number of connection and mean loss
+    "phi": 0.5,             # parameter that balances off the ranking between min loss and mean loss
 }
 
 def main(n_gen=5, **hyper):
@@ -51,7 +52,9 @@ def main(n_gen=5, **hyper):
     hyper["n_inputs"], hyper["n_outputs"] = X.shape[1], y.shape[1]
 
     print("Initializing Population ...")
-    population = init_population(**hyper)   # initialize the population
+
+    # initialize the population
+    population = init_population(**hyper)
 
     for gen in range(n_gen):
 
@@ -62,10 +65,12 @@ def main(n_gen=5, **hyper):
         inputs, targets = sample_data(X, y, hyper["n_rollouts"])
 
         print("Evaluating population ... ")
-        eval_scores, gen_statistics = evaluate_population(population, inputs, targets, **hyper)  # evaluate the performance of population
+        # evaluate the performance of population
+        eval_scores, gen_statistics = evaluate_population(population, inputs, targets, **hyper)  
 
         print("Evolving population ...")
-        population = evolve_population(population, eval_scores, gen=gen, **hyper)  # create new population based on evaluation
+        # create new population based on evaluation
+        population = evolve_population(population, eval_scores, gen=gen, **hyper)  
 
         print("Generation lasted {:4f} seconds.".format(time.time() - start))
 
@@ -209,7 +214,7 @@ def sample_data(X, y, n_rollouts):
 
 
 def load_mnist():
-    """ Loads and preprocessed MNIST training data. """
+    """ Loads and preprocesses MNIST training data. """
 
     train_dataset = tfds.load(name="mnist", split="train")
 
