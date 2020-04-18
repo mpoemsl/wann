@@ -3,8 +3,6 @@ import tensorflow as tf
 import numpy as np
 import cv2
 
-# TODO unlogged / logged data for fire datset?
-
 def get_experiment_name(dataset_name="mnist", n_gen=128, pop_size=64, weight_type="random", **kwargs):
     """ Returns name for experiment given a unique subset of hyperparameters. """
 
@@ -35,28 +33,28 @@ def load_dataset(dataset_name, split="train"):
         # load dataset   
         if split == "train":
 
-            dataset = tfds.load(name="forest_fires", split="train[:80%]")
+            dataset = tfds.load(name="forest_fires", split="train[20%:]")
             x = np.array([(sample["features"]["rain"], sample["features"]["wind"], sample["features"]["RH"], sample["features"]["temp"]) for sample in tfds.as_numpy(dataset)])
             y = np.array([sample["area"] for sample in tfds.as_numpy(dataset)])
             
             x_normalized = np.stack([(x[:, col] - x[:, col].min()) / (x[:, col].max() - x[:, col].min()) for col in range(x.shape[1])], axis=1)       
 
-            y_logged = np.log(y + 1.0)
-            y_normalized = y_logged / 10
-            y_normalized = y.reshape(-1, 1)            
+            # 300 is a upper limit for y
+            y_normalized = y / 300
+            y_normalized = y_normalized.reshape(-1, 1)            
             
             return x_normalized, y_normalized
 
         elif split == "test":
 
-            dataset = tfds.load(name="forest_fires", split="train[80%:]")
+            dataset = tfds.load(name="forest_fires", split="train[:20%]")
             x = np.array([(sample["features"]["rain"], sample["features"]["wind"], sample["features"]["RH"], sample["features"]["temp"]) for sample in tfds.as_numpy(dataset)])
             y_raw = np.array([sample["area"] for sample in tfds.as_numpy(dataset)])
             
             x_normalized = np.stack([(x[:, col] - x[:, col].min()) / (x[:, col].max() - x[:, col].min()) for col in range(x.shape[1])], axis=1)       
             y_raw = y_raw.reshape(-1, 1)
 
-            # y_pred must be: exp(y_pred*10) - 1
+            # y_pred must be: y_pred * 300
             return x_normalized, y_raw           
 
         else:
@@ -78,4 +76,15 @@ def downsize_and_deskew(img, tgt_shape=(16, 16)):
         skew = moments["mu11"] / moments["mu02"]
         M = np.float32([[1, skew, -0.5 * tgt_shape[0] * skew], [0, 1, 0]])
         return cv2.warpAffine(downsized_img, M, tgt_shape, flags=(cv2.WARP_INVERSE_MAP|cv2.INTER_LINEAR))  
+
+
+X, y = load_dataset("forestfires", split="train")
+
+print("train:")
+print(y)
+
+X, y = load_dataset("forestfires", split="test")
+
+print("test")
+print(y)
 

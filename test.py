@@ -87,9 +87,10 @@ def main():
 
                 elif dataset_name == "forestfires":
                     # delog
-                    y_pred = np.exp(outputs * 10) - 1.0
+                    y_pred = outputs * 300
 
-                eval_score = eval_func(y_true, y_pred)
+                print(y_true, y_pred)
+                eval_score = eval_func(y_true, y_pred[:, 0])
                 
                 eval_scores.append(eval_score)
             

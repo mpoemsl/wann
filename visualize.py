@@ -27,7 +27,7 @@ def main():
     eval_name = eval_df.columns[0]
     mean_eval_scores = eval_df[eval_name].values
 
-    title = "{} Generations of WANN Training on {} \nwith Population Size {} and {} Weight(s)".format(n_gen, dataset.upper(), pop_size, titlelize(weight_type))
+    title = "{} Generations of WANN Training on {} \nwith Population Size {} and {} Weight(s)".format(n_gen, titlelize(dataset), pop_size, titlelize(weight_type))
     plot_stats(mean_losses, mean_n_cons, mean_n_layers, mean_eval_scores, eval_name, title, "plots/{}.png".format(train_exp_name))  
 
 
@@ -39,7 +39,8 @@ def plot_stats(mean_losses, mean_n_cons, mean_n_layers, mean_eval_scores, eval_n
 
     axes[0, 0].plot(gens, mean_eval_scores, color="blue")
     axes[0, 0].set_ylabel(titlelize(eval_name))
-    axes[0, 0].set_title("Mean {} Score".format(titlelize(eval_name)))
+    axes[0, 0].set_ylim(0, 100)
+    axes[0, 0].set_title("Mean {} Score".format(eval_name.upper()))
 
     axes[0, 1].plot(gens, mean_losses, color="green")
     axes[0, 1].set_ylabel("Loss")
