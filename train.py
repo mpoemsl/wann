@@ -3,7 +3,7 @@ from genetic_algorithm import evolve_population
 from individuum import Individuum
 
 
-from sklearn.metrics import log_loss
+from sklearn.metrics import log_loss, mean_squared_error
 from scipy.special import softmax
 from copy import deepcopy
 from tqdm import tqdm
@@ -17,8 +17,8 @@ import os
 SHARED_WEIGHT_VALUES = [-2.0, -1.0, -0.5, 0.5, 1.0, 2.0]
 
 LOSS_FUNCTIONS = {
-    "cce": lambda targets, outputs: log_loss(targets, softmax(outputs, axis=1)),
-    "mse": lambda targets, outputs: np.square(targets - outputs).mean()
+    "cce": lambda y_true, y_pred: log_loss(y_true, softmax(y_pred, axis=1)),
+    "mse": lambda y_true, y_pred: mean_squared_error(y_true, y_pred)
 }
 
 # initialization of hyper parameters

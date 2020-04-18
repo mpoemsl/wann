@@ -9,9 +9,6 @@ import pandas as pd
 import numpy as np
 import os
 
-# TODO check hyper parameters
-# TODO more clear comments
-
 
 # constants
 SHARED_WEIGHT_VALUES = [-2.0, -1.0, -0.5, 0.5, 1.0, 2.0]
