@@ -68,7 +68,7 @@ def evolve_population(population, eval_scores, cull_ratio=0.1, elite_ratio=0.1, 
     return np.array(new_population)
 
 
-def breed(worse, better, autogamy=0.2, n_cross_points=2, **hyper):
+def breed(worse, better, prob_crossover=0.8, n_cross_points=2, **hyper):
     """ Let two parents breed. Activation functions and nodes are taken by the better parent.
     Only the connections are a mix of both parents. Better parent can also breed alone, see parameter autogamy.
 
@@ -78,13 +78,13 @@ def breed(worse, better, autogamy=0.2, n_cross_points=2, **hyper):
     Parameters:
     worse       -   (Individuum) the worse parent with a lower (or equal) fitness rank than "better"
     better      -   (Individuum) the better parent with a higher (or equal) fitness rank than "worse"
-    autogamy    -   [0,1] probability that the better parent breeds alone.
-                    In such cases, the new kid a mutated version of its parent.
+    prob_crossover -   [0,1] probability that the both parents do a crossover and breed (and not one alone).
+                       Otherwise, the new kid is a mutated version of the better parent.
     num_cross_points - (int) number of crosspoints for the crossover of the two parents
     """
 
     # to certain percentage let better genome pass without breeding (later: mutation!)
-    if np.random.random() <= autogamy:
+    if np.random.random() > prob_crossover:
         kid = deepcopy(better)
     else:  # crossover of both parents
 
