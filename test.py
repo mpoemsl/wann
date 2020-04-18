@@ -80,9 +80,14 @@ def main():
 
                 # predict with single shared weight
                 outputs = indiv.predict(X, weight)
+        
+                if dataset_name == "mnist":
+                    # decode
+                    y_pred = np.argmax(outputs, axis=1)
 
-                # decode
-                y_pred = np.argmax(outputs, axis=1)
+                elif dataset_name == "forestfires":
+                    # delog
+                    y_pred = np.exp(outputs * 10) - 1.0
 
                 eval_score = eval_func(y_true, y_pred)
                 

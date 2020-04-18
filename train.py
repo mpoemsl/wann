@@ -23,13 +23,13 @@ LOSS_FUNCTIONS = {
 
 # initialization of hyper parameters
 hyper = {
-    "dataset_name": "mnist",        # name of dataset
-    "loss_name": "cce",             # cross-entropy loss
-    "n_gen": 20,                    # number of generations: paper does 4096
+    "dataset_name": "forestfires",        # name of dataset
+    "loss_name": "mse",             # cross-entropy loss
+    "n_gen": 128,                    # number of generations: paper does 4096
     "pop_size": 64,                 # size of population: paper does 960
-    "sample_size": 1000,            # size of random sample that individuums are evaluated on
+    "sample_size": 100,            # size of random sample that individuums are evaluated on
     "weight_type": "shared",        # weights can either be shared or random
-    "ratio_enabled": 0.05,          # probability of connection being enabled when individuum is initialized
+    "ratio_enabled": 0.8,          # probability of connection being enabled when individuum is initialized
     "tau": 0.5,                     # parameter that balances off the ranking between number of connection and mean loss
     "phi": 0.5,                     # parameter that balances off the ranking between min loss and mean loss
     "cull_ratio": 0.2,              # percentage of unfittest individuals who get excluded from breeding
@@ -52,13 +52,13 @@ def main(n_gen=5, dataset_name="mnist", **hyper):
     dataset_name -  (string) name of the dataset for which the WANN is constructed 
     """
 
-    hyper["experiment_name"] = get_experiment_name(n_gen=n_gen, **hyper)
+    hyper["experiment_name"] = get_experiment_name(n_gen=n_gen, dataset_name=dataset_name, **hyper)
 
     print("Creating folders for experiment '{}' ...".format(hyper["experiment_name"]))
     os.mkdir("best_individuums/" + hyper["experiment_name"])
     os.mkdir("log/train/" + hyper["experiment_name"])
 
-    print("Loading MNIST training data ...")
+    print("Loading {} training data ...".format(dataset_name))
     X, y = load_dataset(dataset_name)
     hyper["n_inputs"], hyper["n_outputs"] = X.shape[1], y.shape[1]
 
