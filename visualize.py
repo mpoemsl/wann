@@ -1,42 +1,48 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import argparse
 import os
 
-# TO-DO: 
-# adapt to updated filestructure
-# include accuracy from log/test
-# take command-line arguments via argparse
+parser = argparse.ArgumentParser(description="Visualizes statistics of a WANN experiment.")
 
-FOLDER = "shared_weight" # "shared_weight"
+parser.add_argument("train_experiment_folder", type=str, help="Path to a train experiment folder.")
+parser.add_argument("test_experiment_folder", type=str, help="Path to a test experiment folder.")
 
 def main():
 
-    dfs = []
-    gen = 0
+    args = parser.parse_args()
 
-    while os.path.exists("log/{}/gen_{}.csv".format(FOLDER, gen)):
-        dfs.append(pd.read_csv("log/{}/gen_{}.csv".format(FOLDER, gen), index_col=0))
-        gen += 1
+    train_exp_name = args.train_experiment_folder.split("/")[-2]
+    test_exp_name = args.test_experiment_folder.split("/")[-2]
 
-    if gen == 0:
-        raise Exception("Log not found!")
+    assert train_exp_name == test_exp_name, "Train and test folder do not belong to the same experiment."
+    dataset, n_gen, pop_size, weight_type = train_exp_name.split("_")[1:]
+    n_gen, pop_size = int(n_gen), int(pop_size)
 
-    gens = np.arange(gen)
+    mean_losses, mean_n_cons, mean_n_layers = get_mean_stats(args.train_experiment_folder)
+    n_gen = min(mean_losses.shape[0], n_gen) 
 
-    mean_eval_scores = [df["eval_scores"].mean() for df in dfs]
-    mean_mean_losses = [df["mean_losses"].mean() for df in dfs]
-    mean_n_cons = [df["n_cons"].mean() for df in dfs]
-    mean_n_layers = [df["n_layers"].mean() for df in dfs]
+    eval_df = pd.read_csv(args.test_experiment_folder + "eval_scores.csv", index_col=0)
+    eval_name = eval_df.columns[0]
+    mean_eval_scores = eval_df[eval_name].values
 
+    title = "{} Generations of WANN Training on {} \nwith Population Size {} and {} Weight(s)".format(n_gen, dataset.upper(), pop_size, titlelize(weight_type))
+    plot_stats(mean_losses, mean_n_cons, mean_n_layers, mean_eval_scores, eval_name, title, "plots/{}.png".format(train_exp_name))  
+
+
+
+def plot_stats(mean_losses, mean_n_cons, mean_n_layers, mean_eval_scores, eval_name, title, exp_fp):
+
+    gens = np.arange(mean_losses.shape[0])
     fig, axes = plt.subplots(2, 2, figsize=(8, 8), sharex=True)
 
     axes[0, 0].plot(gens, mean_eval_scores, color="blue")
-    axes[0, 0].set_ylabel("Score")
-    axes[0, 0].set_title("Mean Evaluation Score")
+    axes[0, 0].set_ylabel(titlelize(eval_name))
+    axes[0, 0].set_title("Mean {} Score".format(titlelize(eval_name)))
 
-    axes[0, 1].plot(gens, mean_mean_losses, color="green")
-    axes[0, 1].set_ylabel("Cross-Entropy")
+    axes[0, 1].plot(gens, mean_losses, color="green")
+    axes[0, 1].set_ylabel("Loss")
     axes[0, 1].set_title("Mean Loss")
 
     axes[1, 0].plot(gens, mean_n_cons, color="red")
@@ -49,11 +55,41 @@ def main():
     axes[1, 1].set_ylabel("Layers")
     axes[1, 1].set_title("Mean Number of Layers")
     
-    plt.suptitle("Statistics about {} Generations of Evolution in {}".format(gen, FOLDER))
-    plt.tight_layout(pad=3.0)    
+    
+    plt.suptitle(title)   
 
+    plt.tight_layout(pad=3.0)
+    plt.subplots_adjust(top=0.85, bottom=0.10)
+
+    plt.savefig(exp_fp)
     plt.show()
 
+
+def titlelize(word):
+
+    chars = list(word)
+    chars[0] = chars[0].upper()
+
+    return "".join(chars)
+
+
+def get_mean_stats(train_exp_folder):
+    
+    dfs = []
+    gen = 0
+
+    while os.path.exists(train_exp_folder + "stats_gen_{}.csv".format(gen)):
+        dfs.append(pd.read_csv(train_exp_folder + "stats_gen_{}.csv".format(gen), index_col=0))
+        gen += 1
+
+    if gen == 0:
+        raise Exception("Log not found!")
+
+    mean_losses = np.array([df["mean_losses"].mean() for df in dfs])
+    mean_n_cons = np.array([df["n_cons"].mean() for df in dfs])
+    mean_n_layers = np.array([df["n_layers"].mean() for df in dfs])
+
+    return mean_losses, mean_n_cons, mean_n_layers
 
 
 if __name__ == "__main__":
