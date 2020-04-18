@@ -25,7 +25,7 @@ LOSS_FUNCTIONS = {
 hyper = {
     "dataset_name": "mnist",        # name of dataset
     "loss_name": "cce",             # cross-entropy loss
-    "n_gen": 3,                     # number of generations: paper does 4096
+    "n_gen": 20,                    # number of generations: paper does 4096
     "pop_size": 64,                 # size of population: paper does 960
     "sample_size": 1000,            # size of random sample that individuums are evaluated on
     "weight_type": "shared",        # weights can either be shared or random
@@ -86,7 +86,7 @@ def main(n_gen=5, dataset_name="mnist", **hyper):
         print("Generation lasted {:4f} seconds.".format(time.time() - start))
 
         # Save statistics in log
-        pd.DataFrame(gen_statistics).to_csv("log/train/{}/stats_gen_{}".format(hyper["experiment_name"], gen))
+        pd.DataFrame(gen_statistics).to_csv("log/train/{}/stats_gen_{}.csv".format(hyper["experiment_name"], gen))
 
     print("Finished running {} generations.".format(n_gen))
 
