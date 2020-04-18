@@ -1,17 +1,17 @@
 from genetic_algorithm import evolve_population
+from utilities import load_dataset
 from individuum import Individuum
+
 
 from sklearn.metrics import log_loss
 from scipy.special import softmax
 from copy import deepcopy
 from tqdm import tqdm
 
-import tensorflow_datasets as tfds
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import time
-import cv2
 import os
 
 # initialization of hyper parameters
@@ -33,21 +33,23 @@ hyper = {
     "rank_prob": 0.8,       # probability that ranking is performed via number of connections and mean loss (instead of via mean loss and min loss)
     "tournament_size": 32,  # number of individuals competing to become parent of new kid
     "tau": 0.5,             # parameter that balances off the ranking between number of connection and mean loss
-    "phi": 0.5           # parameter that balances off the ranking between min loss and mean loss
+    "phi": 0.5,             # parameter that balances off the ranking between min loss and mean loss
+    "dataset_name": "mnist"
 }
 
-def main(n_gen=5, **hyper):
+
+def main(n_gen=5, dataset_name="mnist", **hyper):
     """ Main Loop for the WANN construction.
     """
 
     hyper["experiment_name"] = "experiment_{}_{}_{}".format(n_gen, hyper["pop_size"], hyper["weight_type"])
 
-    print("Creating folders for experiment {} ...".format(hyper["experiment_name"]))
+    print("Creating folders for experiment '{}' ...".format(hyper["experiment_name"]))
     os.mkdir("best_individuums/" + hyper["experiment_name"])
     os.mkdir("log/train/" + hyper["experiment_name"])
 
     print("Loading MNIST training data ...")
-    X, y = load_mnist()
+    X, y = load_dataset(dataset_name)
     hyper["n_inputs"], hyper["n_outputs"] = X.shape[1], y.shape[1]
 
     print("Initializing Population ...")
@@ -120,7 +122,7 @@ def evaluate_population(population, inputs, targets, weight_values=[], rank_prob
     mean_losses = performances.mean(axis=1) # mean losses
     min_losses = performances.min(axis=1) # best losses
 
-    if len(weight_values) > 0:
+    if len(weight_values) > 0: # weight_type
         best_weights = weight_values[np.argmin(performances, axis=1)] # best weights for best losses
     else:
         best_weights = 0
@@ -211,36 +213,6 @@ def sample_data(X, y, n_rollouts):
 
     return inputs, targets
 
-
-def load_mnist():
-    """ Loads and preprocesses MNIST training data. """
-
-    train_dataset = tfds.load(name="mnist", split="train")
-
-    train_images = np.array([sample["image"] for sample in tfds.as_numpy(train_dataset)])
-    train_labels = np.array([sample["label"] for sample in tfds.as_numpy(train_dataset)])
-
-    processed_train_images = np.array([downsize_and_deskew(img / 255.0) for img in train_images])
-    processed_train_images = processed_train_images.reshape(train_images.shape[0], -1)
-
-    processed_train_labels = np.zeros((train_labels.shape[0], 10), dtype=np.float64)
-    processed_train_labels[np.arange(train_labels.shape[0]), train_labels] = 1.0
-
-    return processed_train_images, processed_train_labels
-
-
-def downsize_and_deskew(img, tgt_shape=(16, 16)):
-    """ MNIST preprocessing adopted from WANN code base at https://github.com/google/brain-tokyo-workshop/tree/master/WANNRelease/WANN. """
-    
-    downsized_img = cv2.resize(img, tgt_shape)
-    moments = cv2.moments(downsized_img)
-    
-    if abs(moments["mu02"]) < 1e-2:
-        return downsized_img
-    else:
-        skew = moments["mu11"] / moments["mu02"]
-        M = np.float32([[1, skew, -0.5 * tgt_shape[0] * skew], [0, 1, 0]])
-        return cv2.warpAffine(downsized_img, M, tgt_shape, flags=(cv2.WARP_INVERSE_MAP|cv2.INTER_LINEAR))  
 
         
 if __name__ == "__main__":
