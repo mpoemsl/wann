@@ -39,7 +39,12 @@ hyper = {
 
 
 def main(n_gen=5, dataset_name="mnist", **hyper):
-    """ Main Loop for the WANN construction.
+    """ Main loop for the WANNs construction.
+    Creates a population of WANNs and evolves it over several generations.
+
+    Parameters:
+    n_gen        -  (int) number of generations or how often the evolution should take place
+    dataset_name -  (string) name of the dataset for which the WANN is constructed 
     """
 
     hyper["experiment_name"] = "experiment_{}_{}_{}".format(n_gen, hyper["pop_size"], hyper["weight_type"])
@@ -83,6 +88,9 @@ def main(n_gen=5, dataset_name="mnist", **hyper):
 
 def init_population(pop_size=20, **hyper):
     """ Initializes the population by creating a lot of new individuals.
+
+    Parameters:
+    pop_size    -   (int) size of the population  
     """
     population = []
     for _ in range(pop_size):
@@ -93,13 +101,27 @@ def init_population(pop_size=20, **hyper):
 
 
 def evaluate_population(population, inputs, targets, weight_values=[], rank_prob=0.8, tau=0.5, phi=0.5, **hyper):
-    """ Evaluates a complete population. Returns a numpy array of evaluation scores.
-    Scores have the same order as the population array.
-    The higher the value, the fitter the individuum.
-    """
+    """ Evaluates a complete population via mean loss and either number of connections XOR minimum loss performance.
+    (Attention! Paper uses pareto dominance ranking, this is not done here! A simple scoring method is used instead.)
 
-    performances = []
-    n_layers = []
+    Returns:
+    (np.array) evaluation scores and statistics about the population.
+    Scores have the same order as the population. The higher the value, the fitter the individuum.
+
+    Parameters:
+    population      -   (np.array)  the population to evaluate
+    inputs          -   (np.array)  samples of inputs that are used to evaluate the individuals (WANNs) performances
+    targets         -   (np.array)  samples of targets for evaluation; target values for the individuals (WANNs) predictions
+    weight_values   -   (list)      a list of weight values that will be single shared over the WANNs
+    rank_prob       -   [0,1]       probability that ranking is performed via number of connections and mean loss
+                                    (instead of via mean loss and min loss)
+    tau             -   [0,1]       scoring parameter: balances between number of connections and mean loss
+    phi             -   [0,1]       scoring parameter: balances between min loss and mean loss       
+    """
+    
+    # stats for complete population
+    performances = []      # loss
+    n_layers = []          # number of layers in WANN
     n_connections = []     # number of enabled connections
 
     weight_values = np.array(weight_values)
@@ -109,21 +131,24 @@ def evaluate_population(population, inputs, targets, weight_values=[], rank_prob
 
         # performance per weight of one individual
         performance = evaluate_individuum(indiv, weight_values, inputs, targets, **hyper)
+        # enabled connections and number of layers of individuum
         n_cons, n_lays = indiv.get_complexity()
 
         n_connections.append(n_cons)
         n_layers.append(n_lays)
         performances.append(performance)
 
+    # make np.arrays from stats
     performances = np.array(performances)
     n_cons = np.array(n_connections)
     n_layers = np.array(n_layers)
-
-    mean_losses = performances.mean(axis=1) # mean losses
-    min_losses = performances.min(axis=1) # best losses
-
-    if len(weight_values) > 0: # weight_type
-        best_weights = weight_values[np.argmin(performances, axis=1)] # best weights for best losses
+    
+    # get mean losses, best losses and best weights for best losses
+    mean_losses = performances.mean(axis=1)
+    min_losses = performances.min(axis=1)
+    if len(weight_values) > 0: 
+        # best weights for best losses
+        best_weights = weight_values[np.argmin(performances, axis=1)] 
     else:
         best_weights = 0
 
@@ -131,26 +156,21 @@ def evaluate_population(population, inputs, targets, weight_values=[], rank_prob
     normed_mean_losses = mean_losses / mean_losses.max()
 
     # scoring
-    # paper: in 0.8 of the cases ranking is done via
-    # mean performance and number of connections
+    # in 0.8 of the cases ranking is done via mean performance and number of connections
     if np.random.random() <= rank_prob:
-        # 0 - best score. 1 - worst score. (for tau == 0.5)
+        # 0 - best score / 1 - worst score (for tau == 0.5)
         normed_n_cons = n_cons / n_cons.max()
+        # naive approach instead of pareto dominance ranking
         scores = tau * normed_n_cons + (1 - tau) * normed_mean_losses
     else:
     # in 0.2 of the cases ranking is done via
     # mean performance and max performance
-        # 0 - best score. 1 - worst score. (for phi == 0.5)
+        # 0 - best score / 1 - worst score (for phi == 0.5)
         normed_min_losses = min_losses / min_losses.max()
+        # naive approach instead of pareto dominance ranking
         scores = phi * normed_min_losses + (1 - phi) * normed_mean_losses
 
-    """ Naive ranking method. Ranks a complete population according to mean loss
-    and either number of connections XOR minimum loss performance. 
-    The parameter tau balances mean loss and connections.
-    The parameter phi balances mean loss and minimal loss.
-    Returns a numpy array with a ranking, ordered in the same manner like the mean loss values.
-    """
-
+    # inverte the scores to get fitness scores: the higher the better! (maximization task)
     eval_scores = 1 - scores
 
     gen_statistics = {
@@ -161,18 +181,21 @@ def evaluate_population(population, inputs, targets, weight_values=[], rank_prob
           "n_cons": n_cons
     }
 
-    # maximize
     return eval_scores, gen_statistics
 
 
 def evaluate_individuum(individuum, weight_values, inputs, targets, n_rollouts=5, weight_type="shared", **kwargs):
-    """ Measure performance of a single indviduum. Returns the single performance values for each weight, averaged over all rollouts.
-    individuum must stem from the class Individuum().
-    inputs are the input samples that are fed into the WANN. Must be coherent with targets and num_rollouts.
-    targets are the labels for the inputs. Must be coherent with inputs and num_rollouts.
-    n_rollouts indicates how many times the WANNs performance for the weights should be measured.
-    weight_values carries the weights that are each used as one shared weight in the WANN.
-    Returns a numpy array with the performance results for each rollout and weight.
+    """ Measure performance of a single indviduum. 
+    
+    Returns:
+    (np.array) Single performance values (the mean loss) for each weight, averaged over all rollouts.
+
+    Parameters:
+    individuum      -   (Individuum) WANN of which the performance should be measured
+    weight_values   -   (list)       weight values that should each be used as single shared weight in the WANN
+    inputs          -   (np.array)   inputs for the WANN (WANN should predict on them)
+    targets         -   (np.array)   targets for the WANN (compare WANN prediction with them)
+    n_rollouts      -   (int)        how often the WANNs performance per weight should be measured
     """
 
     # indicator for random weights
@@ -202,12 +225,16 @@ def evaluate_individuum(individuum, weight_values, inputs, targets, n_rollouts=5
             # save the loss according to current weight and rollout
             performance_scores[rollout, weight_ix] = np.mean(losses)
 
-    return np.mean(performance_scores, axis=0) # loss for each weight (averages over all rollouts)
+    # return loss for each weight (averaged over all rollouts)
+    return np.mean(performance_scores, axis=0)
     
 
 def sample_data(X, y, n_rollouts):
-    """ Samples from training data. """
+    """ Samples Data from the task's data set.
 
+    Parameters:
+    n_rollouts  -  (int) number of repetitions for each weight value in evaluation.
+    """
     inputs = X[np.random.randint(0, X.shape[0], size=(n_rollouts, 1000)), :]
     targets = y[np.random.randint(0, X.shape[0], size=(n_rollouts, 1000))]   
 
