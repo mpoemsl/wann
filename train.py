@@ -33,7 +33,7 @@ hyper = {
     "rank_prob": 0.8,
     "tournament_size": 32,
     "tau": 0.5,
-    "phi": 0.5,    
+    "phi": 0.5
 }
 
 def main(n_gen=5, **hyper):
