@@ -3,30 +3,28 @@
 import numpy as np
 import pickle
 
+
+# all activations functions are broadcastable
+ACTIVATION_DICT =  {
+    1: lambda x: np.maximum(0, x),          # relu
+    2: lambda x: x,                         # linear
+    3: lambda x: 1.0 * (x > 0.0),           # unsigned step function
+    4: lambda x: np.sin(np.pi * x),         # sin
+    5: lambda x: np.exp(-(x * x) / 2.0),   # gausian with mean 0 and sigma 1
+    6: lambda x: np.tanh(x),                # hyperbolic tangent (tanh) signed
+    7: lambda x: (np.tanh(x / 2.0) + 1.0) / 2.0, # sigmoid unsigned ( 1 / (1 + exp(-x)) )
+    8: lambda x: -x,                        # inverse
+    9: lambda x: abs(x),                    # absolute value
+    10: lambda x: np.cos(np.pi * x),        # cosine
+    11: lambda x: x ** 2                    # squared
+}
+
+
 class Individuum():
 
 
-    def __init__(self, ratio_enabled=0.4, n_inputs=784, n_outputs=10, init_activation=1, **kwargs):
+    def __init__(self, ratio_enabled=0.4, n_inputs=784, n_outputs=10, **kwargs):
         """ Initializes node layers, connection tables and activations."""
-        
-        
-        # all activations functions are broadcastable
-        self.activation_dict = {
-            1: lambda x: np.maximum(0, x),          # relu
-            2: lambda x: x,                         # linear
-            3: lambda x: 1.0 * (x > 0.0),           # unsigned step function
-            4: lambda x: np.sin(np.pi * x),         # sin
-            5: lambda x: np.exp(-(x * x) / 2.0),   # gausian with mean 0 and sigma 1
-            6: lambda x: np.tanh(x),                # hyperbolic tangent (tanh) signed
-            7: lambda x: (np.tanh(x / 2.0) + 1.0) / 2.0, # sigmoid unsigned ( 1 / (1 + exp(-x)) )
-            8: lambda x: -x,                        # inverse
-            9: lambda x: abs(x),                    # absolute value
-            10: lambda x: np.cos(np.pi * x),        # cosine
-            11: lambda x: x ** 2                    # squared
-        }
-
-        assert init_activation in self.activation_dict, "Initial activation not in activation dict!"
-        self.init_activation = init_activation
 
         input_layer = {
             "id": 0,
@@ -50,7 +48,7 @@ class Individuum():
 
         self.layers = [input_layer, output_layer]
         self.connection_tables = [main_connection_table]
-        self.activations = np.full(shape=(output_layer["size"]), fill_value=self.init_activation)
+        self.activations = np.ones(output_layer["size"])
 
 
     def save_to(self, path):
@@ -122,7 +120,7 @@ class Individuum():
     def change_activation(self):
         """ Changes a random activation function. """
         
-        self.activations[np.random.randint(0, self.activations.shape[0])] = np.random.choice(list(self.activation_dict.keys()))
+        self.activations[np.random.randint(0, self.activations.shape[0])] = np.random.choice(list(ACTIVATION_DICT.keys()))
 
 
     def get_activations(self):
@@ -201,7 +199,7 @@ class Individuum():
         self.connection_tables.append(new_layer_table)
     
         # activations follow the same ordering as id (axis 1 of input_layer)
-        self.activations = np.concatenate([self.activations, np.full(shape=(new_layer["size"],), fill_value=self.init_activation)], axis=0)
+        self.activations = np.concatenate([self.activations, np.ones(new_layer["size"])], axis=0)
 
         return self.layers[-1]
 
@@ -348,7 +346,7 @@ class Individuum():
             # apply corresponding activation function to each node
             for node_ix, node_val in enumerate(hidden_nodes[hidden_ix]):
                 activation_id = self.activations[input_startix + node_ix]
-                hidden_nodes[hidden_ix][node_ix] = self.activation_dict[activation_id](node_val)
+                hidden_nodes[hidden_ix][node_ix] = ACTIVATION_DICT[activation_id](node_val)
 
         # gather output drive from input nodes
         input_weight_matrix = input_connection_table[:, :output_layer["size"]].T
@@ -362,7 +360,7 @@ class Individuum():
         # apply corresponding activation function to each node
         for node_ix, node_val in enumerate(output_nodes):
             activation_id = self.activations[node_ix]
-            output_nodes[node_ix] = self.activation_dict[activation_id](node_val)
+            output_nodes[node_ix] = ACTIVATION_DICT[activation_id](node_val)
 
         return output_nodes.T
 

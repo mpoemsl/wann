@@ -7,6 +7,9 @@ from copy import deepcopy
 import numpy as np
 
 
+N_CROSS_POINTS = 4
+
+
 def evolve_population(population, eval_scores, cull_ratio=0.1, elite_ratio=0.1, tournament_size=5, gen=-1, **hyper):
     """ Evolves a complete population. 
     Eliminates weak architectures and allows strong architectures to breed.
@@ -68,7 +71,7 @@ def evolve_population(population, eval_scores, cull_ratio=0.1, elite_ratio=0.1, 
     return np.array(new_population)
 
 
-def breed(worse, better, prob_crossover=0.8, n_cross_points=2, **hyper):
+def breed(worse, better, prob_crossover=0.8, **hyper):
     """ Let two parents breed. Activation functions and nodes are taken by the better parent.
     Only the connections are a mix of both parents. Better parent can also breed alone, see parameter autogamy.
 
@@ -97,7 +100,7 @@ def breed(worse, better, prob_crossover=0.8, n_cross_points=2, **hyper):
         worse_gen = worse.get_genome()
         
         # cross genomes
-        kids_gens = crossover(better_gen, worse_gen, n_cross_points) # returns two child genomes
+        kids_gens = crossover(better_gen, worse_gen) # returns two child genomes
 
         # choose one of the two genomes
         chosen_genome = kids_gens[np.random.random() > 0.5]
@@ -140,7 +143,7 @@ def mutate(individuum, prob_add_node=0.3, prob_add_con=0.4, prob_change_activati
       raise Exception("Invalid mutation type!")
 
 
-def crossover(genome1, genome2, n_cross_points):
+def crossover(genome1, genome2):
     """ Performs a crossover of two genomes with a certain number of cross points.
     
     Returns:
@@ -149,14 +152,13 @@ def crossover(genome1, genome2, n_cross_points):
     Parameters:
     genome1         -   (np.array) consisting of 0s and 1s. One of the two genomes taking part in the crossover
     genome2         -   (np.array) consisting of 0s and 1s. One of the two genomes taking part in the crossover
-    n_cross_points  -   (int) number of cross points for crossover
     """
     # throw error if genome1 and genome2 do not have the same length
     if len(genome1) != len(genome2):
         raise Exception("Genomes must have the same length!")
 
     # get the indices where the crossover points are
-    cross_points = np.array([int(len(genome1) * (i / (n_cross_points + 1))) for i in range(1, n_cross_points + 1)])
+    cross_points = np.array([int(len(genome1) * (i / (N_CROSS_POINTS + 1))) for i in range(1, N_CROSS_POINTS + 1)])
 
     # shift cross points randomly
     cross_points += np.random.randint(-cross_points[0] + 1, cross_points[0])
