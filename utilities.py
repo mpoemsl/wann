@@ -2,6 +2,13 @@ import tensorflow_datasets as tfds
 import numpy as np
 import cv2
 
+
+def get_experiment_name(dataset_name="mnist", n_gen=128, pop_size=64, weight_type="random", **kwargs):
+    """ Returns name for experiment given a unique subset of hyperparameters. """
+
+    return "experiment_{}_{}_{}_{}".format(dataset_name, n_gen, pop_size, weight_type)    
+    
+
 def load_dataset(dataset_name, split="train"):
     """ Loads and preprocesses MNIST training data. """
 
@@ -38,3 +45,4 @@ def downsize_and_deskew(img, tgt_shape=(16, 16)):
         skew = moments["mu11"] / moments["mu02"]
         M = np.float32([[1, skew, -0.5 * tgt_shape[0] * skew], [0, 1, 0]])
         return cv2.warpAffine(downsized_img, M, tgt_shape, flags=(cv2.WARP_INVERSE_MAP|cv2.INTER_LINEAR))  
+
