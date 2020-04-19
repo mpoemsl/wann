@@ -1,16 +1,17 @@
+""" Utility functions for running WANN experiments. """
+
 import tensorflow_datasets as tfds
 import tensorflow as tf
 import numpy as np
 import cv2
 
+
 def get_experiment_name(dataset_name="mnist", n_gen=128, pop_size=64, weight_type="random", prob_crossover=0.0, **kwargs):
     """ Returns name for experiment given a unique subset of hyperparameters. """
 
-
-    print("utilities", dataset_name)
     pc_str = "-".join(str(prob_crossover).split("."))
     return "experiment_{}_{}_{}_{}_{}".format(dataset_name, n_gen, pop_size, weight_type, pc_str)    
-    
+
 
 def load_dataset(dataset_name, split="train"):
     """ Loads and preprocesses MNIST training data. """

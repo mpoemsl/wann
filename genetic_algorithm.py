@@ -1,4 +1,4 @@
-""" Contains functions to implement genetic algorithm for WANNs. """
+""" Functions to implement a genetic algorithm for WANNs. """
 
 from individuum import Individuum
 
@@ -37,7 +37,7 @@ def evolve_population(population, eval_scores, cull_ratio=0.1, elite_ratio=0.1, 
 
     # save best individuum of this generation if generation number is given
     if gen > -1:
-        ranked_population[-1].save_to("best_individuums/{}/best_gen_{}".format(hyper["experiment_name"], gen))
+        ranked_population[-1].save_to("experiments/{}/train/best_individuums/best_gen_{}".format(hyper["experiment_name"], gen))
 
     # let the fittest x % pass unchanged
     elite_tresh = int(elite_ratio * len(population)) # how many indviduals are passed on
@@ -158,7 +158,8 @@ def crossover(genome1, genome2):
         raise Exception("Genomes must have the same length!")
 
     # get the indices where the crossover points are
-    cross_points = np.array([int(len(genome1) * (i / (N_CROSS_POINTS + 1))) for i in range(1, N_CROSS_POINTS + 1)])
+    n_cross_points = min(len(genome1) - 1, N_CROSS_POINTS)
+    cross_points = np.linspace(0, len(genome1), n_cross_points + 2)[1:-1].astype(int)
 
     # shift cross points randomly
     cross_points += np.random.randint(-cross_points[0] + 1, cross_points[0])

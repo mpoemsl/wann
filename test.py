@@ -1,4 +1,5 @@
-# computes accuracies on test mnist dataset for stored best individuums and stores results in log/test/
+""" Script to compute evaluation scores on the test data of WANN experiments. """
+
 from utilities import load_dataset, get_experiment_name
 from individuum import Individuum
 
@@ -20,28 +21,28 @@ EVAL_FUNCTIONS = {
 }
 
 parser = argparse.ArgumentParser(description="Performs test evaluations on best individuals of a WANN experiment.")
+parser.add_argument("exp_folder", type=str, help="Path to a experiment folder.")
 
-parser.add_argument("train_experiment_folder", type=str, help="Path to a train experiment folder.")
-parser.add_argument("eval_name", type=str, help="Evaluation function name (acc or mae)")
-
-
-def main():
+def main(exp_folder):
     """ Tests the best individuum per generation. Writes the results out into log/test/.
     """
 
-    args = parser.parse_args()
-    exp_name = args.train_experiment_folder.split("/")[-2]
+    exp_name = exp_folder.split("/")[-2]
 
-    print(exp_name)
     dataset_name, n_gen, pop_size, weight_type = exp_name.split("_")[1:-1]
     n_gen, pop_size = int(n_gen), int(pop_size)
 
+    if dataset_name == "mnist":
+        eval_name = "acc"
+    elif dataset_name == "forestfires":
+        eval_name = "mae"
+    else:
+        raise Exception("Invalid datset name '{}'!".format(dataset_name))
+
+    print("Calculating {} for {} ...".format(eval_name.upper(), exp_name))
+
     # save mean evaluation scores
     mean_eval_scores = []   
-    
-    # get experiment folder path
-    exp_folder = args.train_experiment_folder
-    eval_name = args.eval_name
     
     # load test data set
     X, y = load_dataset(dataset_name, split="test")
@@ -60,9 +61,9 @@ def main():
 
     for gen in tqdm(range(0, n_gen)):
         
-        indiv_file_name = "_".join(["best", "gen", str(gen)])
+        indiv_file_name = "best_gen_" + str(gen)
 
-        indiv_path = exp_folder + indiv_file_name
+        indiv_path = "experiments/{}/train/best_individuums/{}".format(exp_name, indiv_file_name)
 
         # check if an individuum exists in this generation (algorithm might have stopped because not enough memory could be allocated)
         if os.path.isfile(indiv_path + "_layers"):
@@ -101,10 +102,10 @@ def main():
             print("Individuum for", gen, ". generation does not exist")
         
     # save results
-    log_folder = "log/test/" + exp_name + "/"
-    os.mkdir(log_folder)
-    pd.DataFrame({eval_name: mean_eval_scores}).to_csv(log_folder + "eval_scores.csv")
+    pd.DataFrame({eval_name: mean_eval_scores}).to_csv("experiments/{}/test/eval_scores.csv".format(exp_name))
 
 if __name__ == "__main__":
-    main()
+
+    args = parser.parse_args()
+    main(args.exp_folder)
     

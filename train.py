@@ -1,7 +1,8 @@
+""" Script to perform a WANN training experiment. """
+
 from utilities import load_dataset, get_experiment_name
 from genetic_algorithm import evolve_population
 from individuum import Individuum
-
 
 from sklearn.metrics import log_loss, mean_squared_error
 from scipy.special import softmax
@@ -22,48 +23,27 @@ LOSS_FUNCTIONS = {
     "mse": lambda y_true, y_pred: mean_squared_error(y_true, y_pred)
 }
 
-# initialization of hyper parameters
-PARAMS = {
-    "dataset_name": "forestfires",        # name of dataset
-    "loss_name": "cce",             # cross-entropy loss
-    "n_gen": 128,                    # number of generations: paper does 4096
-    "pop_size": 64,                 # size of population: paper does 960
-    "sample_size": 1000,            # size of random sample that individuums are evaluated on
-    "weight_type": "shared",        # weights can either be shared or random
-    "ratio_enabled": 0.05,          # probability of connection being enabled when individuum is initialized
-    "tau": 0.5,                     # parameter that balances off the ranking between number of connection and mean loss
-    "phi": 0.5,                     # parameter that balances off the ranking between min loss and mean loss
-    "cull_ratio": 0.2,              # percentage of unfittest individuals who get excluded from breeding
-    "elite_ratio": 0.2,             # percentage of fittest individuals who pass on to the new population unchanged
-    "tournament_size": 32,          # number of individuals competing to become parent of new kid
-    "prob_crossover": 0.0,          # percentage of how often no crossover takes place, but the best genome is passed on after mutating
-    "prob_add_node": 0.25,          # probability of adding a node as mutation
-    "prob_add_con": 0.25,           # probability of adding a connection as mutation
-    "prob_change_activation": 0.5,  # probability of changing the activation function as mutation
-    "prob_rank_n_cons": 0.8         # probability that ranking is performed via number of connections and mean loss (instead of via mean loss and min loss)
-}
-
 parser = argparse.ArgumentParser(description="Performs training of a WANN experiment.")
 
-parser.add_argument("dataset_name", type=str)
-parser.add_argument("loss_name", type=str)
-parser.add_argument("n_gen", type=int)
-parser.add_argument("pop_size", type=int)
-parser.add_argument("sample_size", type=int)
-parser.add_argument("ratio_enabled", type=float)
-parser.add_argument("weight_type", type=str)
-parser.add_argument("prob_crossover", type=float)
+# dataset is mandatory
+parser.add_argument("dataset_name", type=str, help="Name of dataset: One of 'mnist', 'forestfires'.")
 
-args = parser.parse_args()
+# experiment variables
+parser.add_argument("--n_gen", default=3, type=int, help="Number of generations: Paper does 4096.")
+parser.add_argument("--pop_size", default=20, type=int, help="Size of population.")
+parser.add_argument("--weight_type", default="shared", type=str, help="Type of weights: One of 'shared', 'random'.")
+parser.add_argument("--prob_crossover", default="0.0", type=float, help="Probability of crossover between two parents instead of autogamy of better parent.")
 
-PARAMS["dataset_name"] = args.dataset_name
-PARAMS["loss_name"] = args.loss_name
-PARAMS["n_gen"] = args.n_gen
-PARAMS["pop_size"] = args.pop_size
-PARAMS["sample_size"] = args.sample_size
-PARAMS["weight_type"] = args.weight_type
-PARAMS["ratio_enabled"] = args.ratio_enabled
-PARAMS["prob_crossover"] = args.prob_crossover
+# fixed parameters
+parser.add_argument("--tau", default=0.5, type=float, help="Parameter that balances off the ranking between number of connection and mean loss.")
+parser.add_argument("--phi", default=0.5, type=float, help="Parameter that balances off the ranking between min loss and mean loss.")
+parser.add_argument("--prob_rank_n_cons", default=0.8, type=float, help="Probability of ranking according to number of connections and mean loss.")
+parser.add_argument("--cull_ratio", default=0.2, type=float, help="Ratio of unfittest individuums excluded from breeding.")
+parser.add_argument("--elite_ratio", default=0.2, type=float, help="Ratio of fittest individuums surviving unchanged.")
+parser.add_argument("--tournament_size", default=32, type=int, help="Number of individuums competing to become parents.")
+parser.add_argument("--prob_add_node", default=0.25, type=float, help="Probability of adding a node as mutation.")
+parser.add_argument("--prob_add_con", default=0.25, type=float, help="Probability of adding a connection as mutation.")
+parser.add_argument("--prob_change_act", default=0.50, type=float, help="Probability of changing an activation function as mutation.")
 
 
 def main(n_gen=5, dataset_name="mnist", **hyper):
@@ -77,41 +57,40 @@ def main(n_gen=5, dataset_name="mnist", **hyper):
     
     hyper["experiment_name"] = get_experiment_name(n_gen=n_gen, dataset_name=dataset_name, **hyper)
 
+    if not os.path.exists("experiments"):
+        os.mkdir("experiments")
+
     print("Creating folders for experiment '{}' ...".format(hyper["experiment_name"]))
-    os.mkdir("best_individuums/" + hyper["experiment_name"])
-    os.mkdir("log/train/" + hyper["experiment_name"])
+    os.mkdir("experiments/" + hyper["experiment_name"])
+    os.mkdir("experiments/" + hyper["experiment_name"] + "/train")
+    os.mkdir("experiments/" + hyper["experiment_name"] + "/test")
+    os.mkdir("experiments/" + hyper["experiment_name"] + "/train/best_individuums")
 
     print("Loading {} training data ...".format(dataset_name))
     X, y = load_dataset(dataset_name)
     hyper["n_inputs"], hyper["n_outputs"] = X.shape[1], y.shape[1]
 
-    print("Initializing Population ...")
-
-    # initialize the population
+    print("Initializing population ...")
     population = init_population(**hyper)
 
-    for gen in range(n_gen):
+    start = time.time()
 
-        print("\nGeneration", gen + 1)
-        start = time.time()
+    print("Running {} generations ...".format(n_gen))
 
-        print("Sampling data ...")
+    for gen in tqdm(range(n_gen)):
+
         inputs, targets = sample_data(X, y, **hyper)
 
-        print("Evaluating population ... ")
         # evaluate the performance of population
         eval_scores, gen_statistics = evaluate_population(population, inputs, targets, **hyper)  
 
-        print("Evolving population ...")
         # create new population based on evaluation
         population = evolve_population(population, eval_scores, gen=gen, **hyper)  
 
-        print("Generation lasted {:4f} seconds.".format(time.time() - start))
-
         # Save statistics in log
-        pd.DataFrame(gen_statistics).to_csv("log/train/{}/stats_gen_{}.csv".format(hyper["experiment_name"], gen))
+        pd.DataFrame(gen_statistics).to_csv("experiments/{}/train/stats_gen_{}.csv".format(hyper["experiment_name"], gen))
 
-    print("Finished running {} generations.".format(n_gen))
+    print("Finished running {} generations in {:2f} seconds.".format(n_gen, time.time() - start))
 
 
 def init_population(pop_size=20, **hyper):
@@ -154,7 +133,7 @@ def evaluate_population(population, inputs, targets, prob_rank_n_cons=0.8, tau=0
     loss_func = LOSS_FUNCTIONS[loss_name]
     
     # evaluate each individuum
-    for ix, individuum in enumerate(tqdm(population)):
+    for ix, individuum in enumerate(population):
 
         # gather weight values
         if weight_type == "shared":
@@ -251,5 +230,27 @@ def sample_data(X, y, sample_size=1000, **kwargs):
         
 if __name__ == "__main__":
 
-    main(**PARAMS)
+
+    args = parser.parse_args()
+    params = vars(args)
+
+    if params["dataset_name"] == "mnist":
+
+        params["loss_name"] = "cce"
+        params["sample_size"] = 1000
+        params["ration_enabled"] = 0.05
+
+    elif params["dataset_name"] == "forestfires":
+
+        params["loss_name"] = "mse"
+        params["sample_size"] = 100
+        params["ratio_enabled"] = 0.65
+    
+    else:
+
+        raise Exception("Invalid datset name '{}'!".format(params["dataset_name"]))
+
+    print("\nPARAMS:\n", params, "\n")
+
+    main(**params)
 

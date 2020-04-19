@@ -79,13 +79,23 @@ class Individuum():
         """ Splits a random enabled connections and places a node inbetween by adding a node layer if necessary. """
 
         split_src_layer_id, split_src_node, split_dst_layer_id, split_dst_node = self.get_random_connection(enabled=True)
+
+        # getting a random enabled connection may be impossible if all conections are disabled
+        if split_src_layer_id is None:
+            return
+
         split_src_layer, split_dst_layer = self.layers[split_src_layer_id], self.layers[split_dst_layer_id]
 
         # find existing candidate layers for new node
         node_layers = [layer for layer in self.layers if layer["src"] == split_src_layer_id and layer["dst"] == split_dst_layer_id]
         
         if len(node_layers) == 0:
+
             node_layer = self.add_layer(split_src_layer, split_dst_layer)
+
+            # new layer may take up too much RAM
+            if node_layer is None:
+                return 
         else:            
             node_layer = np.random.choice(node_layers)
 
@@ -110,8 +120,10 @@ class Individuum():
         genome = self.get_genome()
         disabled_ics = np.where(genome == False)[0]
 
+        # enabling a disabled connection is impossible if there is no disabled connection
         if len(disabled_ics) == 0:
-            raise Exception("No disabled connections found, so add_connection is impossible.")
+            print("Warning: No disabled connections found, so add_connection is impossible; skipping operation.")
+            return
 
         genome[np.random.choice(disabled_ics)] = True
         self.set_genome(genome)
@@ -174,6 +186,11 @@ class Individuum():
             "dst": dst_layer["id"],
             "pos": (src_layer["pos"] + dst_layer["pos"]) / 2
         }
+
+        # pop_size * len(self.connection_tables) * src_layer["size"] * 500_000 * 8 bit per boolean is about all 16 GB of RAM can sustain in worst case
+        if new_layer["size"] > 500_000:
+            print("Warning: Adding new layer would take up too much RAM; skipping operation.")
+            return None
 
         self.layers.append(new_layer)
         self.rearrange_layers()
@@ -395,8 +412,10 @@ class Individuum():
 
                 relevant_connections.extend(list(zip(src_layer_ids, src_ics, dst_layer_ids, dst_ics)))
 
+        # there may be no relevant connections
         if len(relevant_connections) == 0:
-            raise Exception("No relevant connections to choose from!")
+            print("Warning: No relevant connections to choose random connection from; skipping operation.")
+            return (None, None, None, None)
         else:
             return relevant_connections[np.random.randint(0, len(relevant_connections))]
 
@@ -410,35 +429,6 @@ class Individuum():
         for layer, ranked_pos in zip(self.layers, layer_pos_ranked):
             layer["pos"] = ranked_pos
 
-
-    def prettyprint_connections(self):
-        """ Prints connection tables. """
-
-        for ix, table_layer in enumerate(self.layers):
-            if table_layer["table_ix"] != None:
-
-                print("\nTable {} for Layer {}:".format(table_layer["table_ix"], table_layer["id"]))
-                row_ics = table_layer["size"] * [str(table_layer["id"])]
-                column_ics = [c for layer in self.layers if layer["pos"] > table_layer["pos"] for c in layer["size"] * str(layer["id"])]
-                table = self.connection_tables[table_layer["table_ix"]]
-
-                assert len(row_ics) == table.shape[0]
-                assert len(column_ics) == table.shape[1], str((len(column_ics), table.shape[1]))
-
-                print(" |" + " ".join(column_ics[:80]))
-                print(("-" * (1 + len(column_ics)) * 2)[:160])
-        
-                for n, (row_ix, row) in enumerate(zip(row_ics, table)):
-                    print(str(row_ix) + "|", end="")
-                    for connected in row[:80]:
-                        if connected:
-                            print("c ", end="")
-                        else:
-                            print(". ", end="")
-                    print()
-                    if n > 20:
-                        print("...")
-                        break
 
 
     def get_startix(self, destination_layer, source_layer):
