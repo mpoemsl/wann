@@ -1,12 +1,9 @@
 """ Script to perform a WANN training experiment. """
 
-from utilities import load_dataset, get_experiment_name
+from utilities import SHARED_WEIGHT_VALUES, LOSS_FUNCTIONS, load_dataset, get_experiment_name
 from genetic_algorithm import evolve_population
 from individuum import Individuum
 
-from sklearn.metrics import log_loss, mean_squared_error
-from scipy.special import softmax
-from copy import deepcopy
 from tqdm import tqdm
 
 import matplotlib.pyplot as plt
@@ -15,13 +12,6 @@ import numpy as np
 import argparse
 import time
 import os
-
-SHARED_WEIGHT_VALUES = [-2.0, -1.0, -0.5, 0.5, 1.0, 2.0]
-
-LOSS_FUNCTIONS = {
-    "cce": lambda y_true, y_pred: log_loss(y_true, softmax(y_pred, axis=1)),
-    "mse": lambda y_true, y_pred: mean_squared_error(y_true, y_pred)
-}
 
 parser = argparse.ArgumentParser(description="Performs training of a WANN experiment.")
 
@@ -66,8 +56,8 @@ def main(n_gen=5, dataset_name="mnist", **hyper):
     os.mkdir("experiments/" + hyper["experiment_name"] + "/test")
     os.mkdir("experiments/" + hyper["experiment_name"] + "/train/best_individuums")
 
-    print("Loading {} training data ...".format(dataset_name))
-    X, y = load_dataset(dataset_name)
+    print("Loading training data ...")
+    X, y = load_dataset(dataset_name, split="train")
     hyper["n_inputs"], hyper["n_outputs"] = X.shape[1], y.shape[1]
 
     print("Initializing population ...")
@@ -230,7 +220,6 @@ def sample_data(X, y, sample_size=1000, **kwargs):
         
 if __name__ == "__main__":
 
-
     args = parser.parse_args()
     params = vars(args)
 
@@ -244,7 +233,7 @@ if __name__ == "__main__":
 
         params["loss_name"] = "mse"
         params["sample_size"] = 100
-        params["ratio_enabled"] = 0.65
+        params["ratio_enabled"] = 0.85
     
     else:
 

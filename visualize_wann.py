@@ -1,5 +1,7 @@
 """ Script to visualize results of a WANN experiment. """
 
+from utilities import titlelize, plot_stats
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -18,14 +20,19 @@ def main(exp_folder):
     if dataset_name == "mnist":
         sample_size = 1000
         loss_name = "cce"
+        sample_limit = 30_000
     elif dataset_name == "forestfires":
         sample_size = 100
         loss_name = "mse"
+        sample_limit = 20_000
     else:
         raise Exception("Invalid datset name '{}'!".format(dataset_name))
 
     mean_losses, mean_n_cons, mean_n_layers = get_mean_stats(exp_name)
     n_gen = min(mean_losses.shape[0], n_gen) 
+
+    if not os.path.exists("experiments/{}/test/eval_scores.csv".format(exp_name)):
+        raise Exception("Evaluation scores for {} not found, please run test.py first.".format(exp_name))
 
     eval_df = pd.read_csv("experiments/{}/test/eval_scores.csv".format(exp_name), index_col=0)
     eval_name = eval_df.columns[0]
@@ -36,50 +43,10 @@ def main(exp_folder):
 
     dataset_name, weight_type = titlelize(dataset_name), titlelize(weight_type)
 
-    title = "{} Generations of WANN Training on {} \nwith Population Size {} and {} Weight(s)".format(n_gen, dataset_name, pop_size, weight_type)
-    plot_fp = "plots/{}.png".format(exp_name)
+    title = "{} Generations of WANN Training on {} \nwith Population Size {} and {} Weight(s)".format(n_gen, dataset_name.upper(), pop_size, weight_type)
+    plot_fp = "plots/wann_{}.png".format(exp_name.split("_", maxsplit=1)[1])
 
-    plot_stats(mean_losses, mean_n_cons, mean_n_layers, mean_eval_scores, eval_name, loss_name, sample_size, title, plot_fp)  
-
-
-def plot_stats(mean_losses, mean_n_cons, mean_n_layers, mean_eval_scores, eval_name, loss_name, samples_per_step, title, plot_fp):
-
-    n_samples = np.arange(mean_losses.shape[0]) * samples_per_step
-    fig, axes = plt.subplots(2, 2, figsize=(8, 8), sharex=True)
-
-    axes[0, 0].plot(n_samples, mean_eval_scores, color="blue")
-    axes[0, 0].set_ylabel(titlelize(eval_name))
-    axes[0, 0].set_title("Mean {} Score".format(eval_name.upper()))
-
-    axes[0, 1].plot(n_samples, mean_losses, color="green")
-    axes[0, 1].set_ylabel(titlelize(loss_name))
-    axes[0, 1].set_title("Mean {} Loss".format(loss_name.upper()))
-
-    axes[1, 0].plot(n_samples, mean_n_cons, color="red")
-    axes[1, 0].set_xlabel("Number of Observed Samples")
-    axes[1, 0].set_ylabel("Connections")
-    axes[1, 0].set_title("Mean Number of Connections")
-
-    axes[1, 1].plot(n_samples, mean_n_layers, color="yellow")
-    axes[1, 1].set_xlabel("Number of Observed Samples")
-    axes[1, 1].set_ylabel("Layers")
-    axes[1, 1].set_title("Mean Number of Hidden Layers")
-    
-    plt.suptitle(title)   
-
-    plt.tight_layout(pad=3.0)
-    plt.subplots_adjust(top=0.85, bottom=0.10)
-
-    plt.savefig(plot_fp)
-    plt.show()
-
-
-def titlelize(word):
-
-    chars = list(word)
-    chars[0] = chars[0].upper()
-
-    return "".join(chars)
+    plot_stats(mean_losses, mean_n_cons, mean_n_layers, mean_eval_scores, eval_name, loss_name, sample_size, title, plot_fp, sample_limit)  
 
 
 def get_mean_stats(exp_name):
@@ -92,7 +59,7 @@ def get_mean_stats(exp_name):
         gen += 1
 
     if gen == 0:
-        raise Exception("Log not found!")
+        raise Exception("Experiment data not found!")
 
     mean_losses = np.array([df["mean_losses"].mean() for df in dfs])
     mean_n_cons = np.array([df["n_cons"].mean() for df in dfs])

@@ -1,24 +1,9 @@
 """ Class for an individuum that represents a valid neural network architecture via connection tables. """
 
+from utilities import ACTIVATION_DICT
+
 import numpy as np
 import pickle
-
-
-# all activations functions are broadcastable
-ACTIVATION_DICT =  {
-    1: lambda x: np.maximum(0, x),          # relu
-    2: lambda x: x,                         # linear
-    3: lambda x: 1.0 * (x > 0.0),           # unsigned step function
-    4: lambda x: np.sin(np.pi * x),         # sin
-    5: lambda x: np.exp(-(x * x) / 2.0),   # gausian with mean 0 and sigma 1
-    6: lambda x: np.tanh(x),                # hyperbolic tangent (tanh) signed
-    7: lambda x: (np.tanh(x / 2.0) + 1.0) / 2.0, # sigmoid unsigned ( 1 / (1 + exp(-x)) )
-    8: lambda x: -x,                        # inverse
-    9: lambda x: abs(x),                    # absolute value
-    10: lambda x: np.cos(np.pi * x),        # cosine
-    11: lambda x: x ** 2                    # squared
-}
-
 
 class Individuum():
 

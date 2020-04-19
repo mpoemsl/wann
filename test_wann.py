@@ -1,24 +1,14 @@
 """ Script to compute evaluation scores on the test data of WANN experiments. """
 
-from utilities import load_dataset, get_experiment_name
+from utilities import SHARED_WEIGHT_VALUES, EVAL_FUNCTIONS, load_dataset, get_experiment_name
 from individuum import Individuum
 
-from sklearn.metrics import accuracy_score, mean_absolute_error
 from tqdm import tqdm
 
 import pandas as pd
 import numpy as np
 import argparse
 import os
-
-
-# constants
-SHARED_WEIGHT_VALUES = [-2.0, -1.0, -0.5, 0.5, 1.0, 2.0]
-
-EVAL_FUNCTIONS = {
-    "acc": lambda y_true, y_pred: accuracy_score(y_true, y_pred),
-    "mae": lambda y_true, y_pred: mean_absolute_error(y_true, y_pred)
-}
 
 parser = argparse.ArgumentParser(description="Performs test evaluations on best individuals of a WANN experiment.")
 parser.add_argument("exp_folder", type=str, help="Path to a experiment folder.")
@@ -84,11 +74,8 @@ def main(exp_folder):
                 outputs = indiv.predict(X, weight)
         
                 if dataset_name == "mnist":
-                    # decode
                     y_pred = np.argmax(outputs, axis=1)
-
                 elif dataset_name == "forestfires":
-                    # delog
                     y_pred = outputs[:, 0] * 300
 
                 eval_score = eval_func(y_true, y_pred)
