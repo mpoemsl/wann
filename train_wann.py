@@ -19,18 +19,18 @@ parser = argparse.ArgumentParser(description="Performs training of a WANN experi
 parser.add_argument("dataset_name", type=str, help="Name of dataset: One of 'mnist', 'forestfires'.")
 
 # experiment variables
-parser.add_argument("--n_gen", default=3, type=int, help="Number of generations: Paper does 4096.")
-parser.add_argument("--pop_size", default=20, type=int, help="Size of population.")
+parser.add_argument("--n_gen", default=3, type=int, help="Number of generations. Gaier and Ha do 4096 on MNIST.")
+parser.add_argument("--pop_size", default=20, type=int, help="Size of population. Gaier and Ha do 960 on MNIST.")
 parser.add_argument("--weight_type", default="shared", type=str, help="Type of weights: One of 'shared', 'random'.")
-parser.add_argument("--prob_crossover", default="0.0", type=float, help="Probability of crossover between two parents instead of autogamy of better parent.")
 
 # fixed parameters
+parser.add_argument("--prob_crossover", default="0.0", type=float, help="Probability of crossover between two parents instead of autogamy of better parent.") 
 parser.add_argument("--tau", default=0.5, type=float, help="Parameter that balances off the ranking between number of connection and mean loss.")
 parser.add_argument("--phi", default=0.5, type=float, help="Parameter that balances off the ranking between min loss and mean loss.")
 parser.add_argument("--prob_rank_n_cons", default=0.8, type=float, help="Probability of ranking according to number of connections and mean loss.")
 parser.add_argument("--cull_ratio", default=0.2, type=float, help="Ratio of unfittest individuums excluded from breeding.")
 parser.add_argument("--elite_ratio", default=0.2, type=float, help="Ratio of fittest individuums surviving unchanged.")
-parser.add_argument("--tournament_size", default=32, type=int, help="Number of individuums competing to become parents.")
+parser.add_argument("--tournament_size", default=32, type=int, help="Number of individuums competing to become parents. Gaier and Ha do 32 on MNISt.")
 parser.add_argument("--prob_add_node", default=0.25, type=float, help="Probability of adding a node as mutation.")
 parser.add_argument("--prob_add_con", default=0.25, type=float, help="Probability of adding a connection as mutation.")
 parser.add_argument("--prob_change_act", default=0.50, type=float, help="Probability of changing an activation function as mutation.")
@@ -81,6 +81,7 @@ def main(n_gen=5, dataset_name="mnist", **hyper):
         pd.DataFrame(gen_statistics).to_csv("experiments/{}/train/stats_gen_{}.csv".format(hyper["experiment_name"], gen))
 
     print("Finished running {} generations in {:2f} seconds.".format(n_gen, time.time() - start))
+    print("The experiment folder for this experiment is experiments/{}/.".format(hyper["experiment_name"]))
 
 
 def init_population(pop_size=20, **hyper):

@@ -1,9 +1,10 @@
-""" Class for an individuum that represents a valid neural network architecture via connection tables. """
+""" Class for an individuum that represents a valid neural network architecture via node layers, connection tables and activations. """
 
 from utilities import ACTIVATION_DICT
 
 import numpy as np
 import pickle
+
 
 class Individuum():
 
@@ -90,11 +91,11 @@ class Individuum():
         dst_in_src_startix = self.get_startix(split_dst_layer, split_src_layer)
         self.connection_tables[split_src_layer["table_ix"]][split_src_node, dst_in_src_startix + split_dst_node] = False
 
-        # enable lower connection from src to node layer
+        # enable lower connection from src layer to node layer
         nde_in_src_startix = self.get_startix(node_layer, split_src_layer)
         self.connection_tables[split_src_layer["table_ix"]][split_src_node, nde_in_src_startix + new_node_ix] = True
 
-        # enable upper connection from node layer to dst
+        # enable upper connection from node layer to dst layer
         dst_in_nde_startix = self.get_startix(split_dst_layer, node_layer)
         self.connection_tables[node_layer["table_ix"]][new_node_ix, dst_in_nde_startix + split_dst_node] = True 
            

@@ -10,9 +10,9 @@ import numpy as np
 import cv2
 
 
-# constants
-
+# adopted from Gaier and Ha, 2019
 SHARED_WEIGHT_VALUES = [-2.0, -1.0, -0.5, 0.5, 1.0, 2.0]
+
 
 TF_LOSS_FUNCTIONS = {
     "cce": tf.keras.losses.CategoricalCrossentropy(),

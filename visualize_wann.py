@@ -9,9 +9,10 @@ import argparse
 import os
 
 parser = argparse.ArgumentParser(description="Visualizes statistics of a WANN experiment.")
-parser.add_argument("exp_folder", type=str, help="Path to a experiment folder.")
+parser.add_argument("exp_folder", type=str, help="Path to WANN experiment folder.")
 
 def main(exp_folder):
+    """ Visualizes statistics about a WANN experiment. """
 
     exp_name = exp_folder.split("/")[-2]
     dataset_name, n_gen, pop_size, weight_type = exp_name.split("_")[1:-1]
@@ -50,6 +51,7 @@ def main(exp_folder):
 
 
 def get_mean_stats(exp_name):
+    """ Extracts mean statistics from train subfolder of an experiment. """
     
     dfs = []
     gen = 0

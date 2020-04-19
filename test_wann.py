@@ -10,8 +10,8 @@ import numpy as np
 import argparse
 import os
 
-parser = argparse.ArgumentParser(description="Performs test evaluations on best individuals of a WANN experiment.")
-parser.add_argument("exp_folder", type=str, help="Path to a experiment folder.")
+parser = argparse.ArgumentParser(description="Performs test evaluations on best individuums of a WANN experiment.")
+parser.add_argument("exp_folder", type=str, help="Path to WANN experiment folder.")
 
 def main(exp_folder):
     """ Tests the best individuum per generation. Writes the results out into log/test/.
