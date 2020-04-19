@@ -3,7 +3,7 @@
 
 A Course Project for "Implementing ANNs with TensorFlow" in WS 2019/20 at Osnabrück University by mpoemsl and jkaltenborn.
 
-The re-implementation is loosely based on:
+This implementation is based on:
 [Gaier, A. and D. Ha (2019). Weight agnostic neural networks.](https://arxiv.org/pdf/1906.04358)
 
 ## Overview 
@@ -18,10 +18,10 @@ This project runs on Python 3 with various supporting packages, which are the ea
 
 ## Usage
 
-To train a WANN, run `python train_wann.py DATASET`, where `DATASET` is one of {forestfires, mnist}. This will create a corresponding experiment folder in `experiments`.
+To train a WANN, run `python train_wann.py DATASET`, where `DATASET` is one of {forestfires, mnist}. This will create a corresponding experiment folder `EXP_FOLDER` in `experiments`.
 
 * Run `python test_wann.py EXP_FOLDER` to evaluate the best individuums of each generation. 
 * Run `python visualize_wann.py EXP_FOLDER` to visualize statistics of this experiment and store them in `plots`.
 * Run `python run_ann.py DATASET` to train, test and visualize a comparable ANN
 
-Or run `bash run_experiments.sh` to do all of the above.
+Or just run `bash run_experiments.sh` to do all of the above.
