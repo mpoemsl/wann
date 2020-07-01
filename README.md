@@ -1,7 +1,7 @@
 # WANN
-[Weight-Agnostic Neural Networks](https://weightagnostic.github.io/) Implementation.
+Weight-Agnostic Neural Networks Implementation.
 
-A Course Project for "Implementing ANNs with TensorFlow" in WS 2019/20 at Osnabrück University by mpoemsl and jkaltenborn.
+A project for the course "Implementing ANNs with TensorFlow" in WS 2019/20 at Osnabrück University by mpoemsl and jkaltenborn.
 
 This implementation is based on:
 [Gaier, A. and D. Ha (2019). Weight agnostic neural networks.](https://arxiv.org/pdf/1906.04358)
