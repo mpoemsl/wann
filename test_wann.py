@@ -1,7 +1,7 @@
 """ Script to compute evaluation scores on the test data of WANN experiments. """
 
-from utilities import SHARED_WEIGHT_VALUES, EVAL_FUNCTIONS, load_dataset, get_experiment_name
-from individuum import Individuum
+from src.utilities import SHARED_WEIGHT_VALUES, EVAL_FUNCTIONS, load_dataset, get_experiment_name
+from src.individuum import Individuum
 
 from tqdm import tqdm
 

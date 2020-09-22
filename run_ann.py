@@ -1,6 +1,6 @@
 """ Script to run fully-connected comparable ANN experiments. """
 
-from utilities import TF_LOSS_FUNCTIONS, EVAL_FUNCTIONS, load_dataset, plot_stats, titlelize
+from src.utilities import TF_LOSS_FUNCTIONS, EVAL_FUNCTIONS, load_dataset, plot_stats, titlelize
 
 from tqdm import tqdm
 

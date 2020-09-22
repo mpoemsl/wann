@@ -1,13 +1,10 @@
 """ Functions to implement a genetic algorithm for WANNs. """
 
-from individuum import Individuum
+from src.individuum import Individuum
 
 from copy import deepcopy
 
 import numpy as np
-
-
-N_CROSS_POINTS = 4
 
 
 def evolve_population(population, eval_scores, cull_ratio=0.1, elite_ratio=0.1, tournament_size=5, gen=-1, **hyper):
@@ -143,7 +140,7 @@ def mutate(individuum, prob_add_node=0.3, prob_add_con=0.4, prob_change_activati
       raise Exception("Invalid mutation type!")
 
 
-def crossover(genome1, genome2):
+def crossover(genome1, genome2, default_n_crosspoints=4):
     """ Performs a crossover of two genomes with a certain number of cross points.
     
     Returns:
@@ -152,13 +149,14 @@ def crossover(genome1, genome2):
     Parameters:
     genome1         -   (np.array) consisting of 0s and 1s. One of the two genomes taking part in the crossover
     genome2         -   (np.array) consisting of 0s and 1s. One of the two genomes taking part in the crossover
+	default_n_crosspoints - (int) default number of crosspoints
     """
     # throw error if genome1 and genome2 do not have the same length
     if len(genome1) != len(genome2):
         raise Exception("Genomes must have the same length!")
 
     # get the indices where the crossover points are
-    n_cross_points = min(len(genome1) - 1, N_CROSS_POINTS)
+    n_cross_points = min(len(genome1) - 1, default_n_crosspoints)
     cross_points = np.linspace(0, len(genome1), n_cross_points + 2)[1:-1].astype(int)
 
     # shift cross points randomly

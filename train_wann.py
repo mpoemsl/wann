@@ -1,8 +1,8 @@
 """ Script to perform a WANN training experiment. """
 
-from utilities import SHARED_WEIGHT_VALUES, LOSS_FUNCTIONS, load_dataset, get_experiment_name
-from genetic_algorithm import evolve_population
-from individuum import Individuum
+from src.utilities import SHARED_WEIGHT_VALUES, LOSS_FUNCTIONS, load_dataset, get_experiment_name
+from src.genetic_algorithm import evolve_population
+from src.individuum import Individuum
 
 from tqdm import tqdm
 
@@ -19,8 +19,8 @@ parser = argparse.ArgumentParser(description="Performs training of a WANN experi
 parser.add_argument("dataset_name", type=str, help="Name of dataset: One of 'mnist', 'forestfires'.")
 
 # experiment variables
-parser.add_argument("--n_gen", default=3, type=int, help="Number of generations. Gaier and Ha do 4096 on MNIST.")
-parser.add_argument("--pop_size", default=20, type=int, help="Size of population. Gaier and Ha do 960 on MNIST.")
+parser.add_argument("--n_gen", default=200, type=int, help="Number of generations. Gaier and Ha do 4096 on MNIST.")
+parser.add_argument("--pop_size", default=100, type=int, help="Size of population. Gaier and Ha do 960 on MNIST.")
 parser.add_argument("--weight_type", default="shared", type=str, help="Type of weights: One of 'shared', 'random'.")
 
 # fixed parameters

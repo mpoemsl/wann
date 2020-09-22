@@ -1,6 +1,6 @@
 """ Class for an individuum that represents a valid neural network architecture via node layers, connection tables and activations. """
 
-from utilities import ACTIVATION_DICT
+from src.utilities import ACTIVATION_DICT
 
 import numpy as np
 import pickle

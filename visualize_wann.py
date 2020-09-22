@@ -1,6 +1,6 @@
 """ Script to visualize results of a WANN experiment. """
 
-from utilities import titlelize, plot_stats
+from src.utilities import titlelize, plot_stats
 
 import matplotlib.pyplot as plt
 import pandas as pd
