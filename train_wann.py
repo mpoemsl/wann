@@ -228,7 +228,7 @@ if __name__ == "__main__":
 
         params["loss_name"] = "cce"
         params["sample_size"] = 1000
-        params["ration_enabled"] = 0.05
+        params["ratio_enabled"] = 0.05
 
     elif params["dataset_name"] == "forestfires":
 
